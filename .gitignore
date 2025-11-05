@@ -61,8 +61,10 @@ Thumbs.db
 # TypeScript
 *.tsbuildinfo
 
-# Optional: Database dumps
+# Optional: Database dumps (但保留迁移文件)
 *.sql
+!**/migrations/**/*.sql
+!**/supabase/migrations/**/*.sql
 *.sqlite
 *.db
 
