@@ -76,3 +76,100 @@ export const validateLogin = (req: Request, res: Response, next: NextFunction) =
 
   next();
 };
+
+/**
+ * 验证创建旅行计划输入
+ */
+export const validateCreateTrip = (req: Request, res: Response, next: NextFunction) => {
+  const { title, destination, startDate, endDate, travelerCount } = req.body;
+
+  // 验证必填字段
+  if (!title) {
+    return res.status(400).json({
+      error: 'Title is required',
+    });
+  }
+
+  if (!destination) {
+    return res.status(400).json({
+      error: 'Destination is required',
+    });
+  }
+
+  if (!startDate) {
+    return res.status(400).json({
+      error: 'Start date is required',
+    });
+  }
+
+  if (!endDate) {
+    return res.status(400).json({
+      error: 'End date is required',
+    });
+  }
+
+  if (travelerCount === undefined || travelerCount === null) {
+    return res.status(400).json({
+      error: 'Traveler count is required',
+    });
+  }
+
+  // 验证旅行人数
+  if (travelerCount < 1) {
+    return res.status(400).json({
+      error: 'Traveler count must be at least 1',
+    });
+  }
+
+  // 验证日期范围
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    return res.status(400).json({
+      error: 'Invalid date format',
+    });
+  }
+
+  if (end < start) {
+    return res.status(400).json({
+      error: 'End date must be after start date',
+    });
+  }
+
+  next();
+};
+
+/**
+ * 验证更新旅行计划输入
+ */
+export const validateUpdateTrip = (req: Request, res: Response, next: NextFunction) => {
+  const { startDate, endDate, travelerCount } = req.body;
+
+  // 如果提供了旅行人数，验证
+  if (travelerCount !== undefined && travelerCount < 1) {
+    return res.status(400).json({
+      error: 'Traveler count must be at least 1',
+    });
+  }
+
+  // 如果同时提供了开始和结束日期，验证日期范围
+  if (startDate && endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({
+        error: 'Invalid date format',
+      });
+    }
+
+    if (end < start) {
+      return res.status(400).json({
+        error: 'End date must be after start date',
+      });
+    }
+  }
+
+  next();
+};
