@@ -173,3 +173,54 @@ export const validateUpdateTrip = (req: Request, res: Response, next: NextFuncti
 
   next();
 };
+
+/**
+ * 验证添加支出输入
+ */
+export const validateAddExpense = (req: Request, res: Response, next: NextFunction) => {
+  const { category, amount, expenseDate } = req.body;
+
+  // 验证必填字段
+  if (!category) {
+    return res.status(400).json({
+      error: 'Category is required',
+    });
+  }
+
+  if (amount === undefined || amount === null) {
+    return res.status(400).json({
+      error: 'Amount is required',
+    });
+  }
+
+  if (!expenseDate) {
+    return res.status(400).json({
+      error: 'Expense date is required',
+    });
+  }
+
+  // 验证金额
+  if (amount <= 0) {
+    return res.status(400).json({
+      error: 'Amount must be greater than 0',
+    });
+  }
+
+  next();
+};
+
+/**
+ * 验证更新支出输入
+ */
+export const validateUpdateExpense = (req: Request, res: Response, next: NextFunction) => {
+  const { amount } = req.body;
+
+  // 如果提供了金额，验证
+  if (amount !== undefined && amount <= 0) {
+    return res.status(400).json({
+      error: 'Amount must be greater than 0',
+    });
+  }
+
+  next();
+};

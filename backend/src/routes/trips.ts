@@ -8,6 +8,7 @@ import {
 } from '../controllers/trips.controller';
 import { authenticateJWT } from '../middleware/auth';
 import { validateCreateTrip, validateUpdateTrip } from '../middleware/validation';
+import expensesRouter, { getBudgetSummary } from './expenses';
 
 const router = Router();
 
@@ -45,5 +46,18 @@ router.put('/:id', authenticateJWT, validateUpdateTrip, updateTrip);
  * @access  Private (需要 JWT)
  */
 router.delete('/:id', authenticateJWT, deleteTrip);
+
+/**
+ * @route   GET /api/trips/:id/budget
+ * @desc    获取预算摘要
+ * @access  Private (需要 JWT)
+ */
+router.get('/:id/budget', authenticateJWT, getBudgetSummary);
+
+/**
+ * 挂载支出管理路由
+ * /api/trips/:id/expenses - 支出 CRUD
+ */
+router.use('/:id/expenses', expensesRouter);
 
 export default router;
