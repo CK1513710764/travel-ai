@@ -1,0 +1,210 @@
+.trip-detail-container {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding-bottom: 40px;
+}
+
+.detail-header {
+  background: white;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-size: 14px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.detail-header h1 {
+  margin: 0;
+  font-size: 28px;
+  color: #1f2937;
+}
+
+.trip-info {
+  background: white;
+  padding: 20px;
+  margin: 0 20px 20px;
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.info-item {
+  display: flex;
+  gap: 10px;
+}
+
+.info-item .label {
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.info-item .value {
+  color: #1f2937;
+}
+
+.no-itinerary {
+  text-align: center;
+  padding: 60px 20px;
+  margin: 0 20px;
+  background: white;
+  border-radius: 8px;
+}
+
+.no-itinerary p {
+  color: #9ca3af;
+  margin-bottom: 20px;
+}
+
+.itinerary-section {
+  margin: 0 20px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #1f2937;
+}
+
+.summary {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.days-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.day-card {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.day-header h3 {
+  margin: 0;
+  color: #1f2937;
+}
+
+.date {
+  color: #667eea;
+  font-weight: 500;
+}
+
+.activities {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.activity {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 15px;
+}
+
+.time {
+  color: #667eea;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.activity-content h4 {
+  margin: 0 0 5px 0;
+  color: #1f2937;
+  font-size: 16px;
+}
+
+.activity-content p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.location {
+  font-weight: 500;
+}
+
+.meals, .accommodation, .notes {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.meals h4, .accommodation h4 {
+  margin: 0 0 10px 0;
+  color: #374151;
+  font-size: 16px;
+}
+
+.meal-list p {
+  margin: 5px 0;
+  color: #6b7280;
+}
+
+.notes p {
+  color: #8b5cf6;
+  font-style: italic;
+}
+
+.tips-section {
+  background: #fef3c7;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.tips-section h3 {
+  margin: 0 0 15px 0;
+  color: #78350f;
+}
+
+.tips-section ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #92400e;
+}
+
+.tips-section li {
+  margin: 8px 0;
+}
+
+.error {
+  text-align: center;
+  padding: 40px;
+  color: #dc2626;
+}
