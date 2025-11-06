@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { tripsAPI } from '../services/api';
 import type { Trip } from '../types';
+import MapView from '../components/MapView';
+import '../components/MapView.css';
 import './TripDetail.css';
 
 const TripDetail = () => {
@@ -102,6 +104,9 @@ const TripDetail = () => {
           </div>
 
           <p className="summary">{trip.itinerary?.summary}</p>
+
+          {/* 地图显示 */}
+          <MapView itinerary={trip.itinerary || null} destination={trip.destination} />
 
           <div className="days-container">
             {trip.itinerary?.days?.map((day) => (
