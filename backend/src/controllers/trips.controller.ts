@@ -319,6 +319,38 @@ export const generateTripItinerary = async (req: Request, res: Response) => {
       currency: trip.currency,
     });
 
+    // 为行程中的地点添加地理坐标
+    const { batchGeocode } = await import('../services/geocoding.service');
+
+    // 收集所有地点地址
+    const addresses: string[] = [];
+    itinerary.days?.forEach((day) => {
+      day.activities?.forEach((activity) => {
+        if (activity.location) {
+          addresses.push(activity.location);
+        }
+      });
+    });
+
+    console.log(`开始地理编码 ${addresses.length} 个地点...`);
+
+    // 批量获取坐标
+    const geocodeResults = await batchGeocode(trip.destination, addresses);
+
+    console.log(`地理编码完成，成功获取 ${geocodeResults.size} 个坐标`);
+
+    // 将坐标添加到行程中
+    itinerary.days?.forEach((day) => {
+      day.activities?.forEach((activity) => {
+        if (activity.location) {
+          const result = geocodeResults.get(activity.location);
+          if (result) {
+            (activity as any).coordinates = result.location;
+          }
+        }
+      });
+    });
+
     // 更新旅行计划的 itinerary 字段
     const { data: updatedTrip, error: updateError } = await userSupabase
       .from('trips')
@@ -344,3 +376,4 @@ export const generateTripItinerary = async (req: Request, res: Response) => {
     });
   }
 };
+

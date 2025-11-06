@@ -63,6 +63,10 @@ export interface Activity {
   location: string;
   description?: string;
   estimatedCost?: number;
+  coordinates?: {
+    lng: number;
+    lat: number;
+  };
 }
 
 // 支出

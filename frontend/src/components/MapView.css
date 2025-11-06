@@ -1,4 +1,5 @@
 .map-container {
+  position: relative;
   width: 100%;
   background: white;
   border-radius: 8px;
@@ -10,20 +11,24 @@
 .map-view {
   width: 100%;
   height: 500px;
+  transition: opacity 0.3s ease;
 }
 
-.map-loading {
+.map-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
-  background: white;
-  border-radius: 8px;
-  margin-bottom: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  z-index: 1000;
 }
 
-.map-loading .spinner {
+.map-loading-overlay .spinner {
   width: 40px;
   height: 40px;
   border: 4px solid #e5e7eb;
@@ -39,9 +44,10 @@
   }
 }
 
-.map-loading p {
+.map-loading-overlay p {
   color: #6b7280;
   margin: 0;
+  font-size: 14px;
 }
 
 .map-error {

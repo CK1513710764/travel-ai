@@ -46,6 +46,10 @@ export interface ItineraryDay {
     location: string;
     description?: string;
     estimatedCost?: number;
+    coordinates?: {
+      lng: number;
+      lat: number;
+    };
   }>;
   meals: {
     breakfast?: string;
