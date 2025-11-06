@@ -13,7 +13,16 @@ const app: Application = express();
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // 在开发环境允许所有 localhost 源
+    if (!origin || origin.startsWith('http://localhost:')) {
+      callback(null, true);
+    } else if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 app.use(express.json());
