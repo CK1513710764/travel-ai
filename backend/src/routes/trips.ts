@@ -5,6 +5,7 @@ import {
   getTripById,
   updateTrip,
   deleteTrip,
+  generateTripItinerary,
 } from '../controllers/trips.controller';
 import { authenticateJWT } from '../middleware/auth';
 import { validateCreateTrip, validateUpdateTrip } from '../middleware/validation';
@@ -46,6 +47,13 @@ router.put('/:id', authenticateJWT, validateUpdateTrip, updateTrip);
  * @access  Private (需要 JWT)
  */
 router.delete('/:id', authenticateJWT, deleteTrip);
+
+/**
+ * @route   POST /api/trips/:id/generate
+ * @desc    生成 AI 行程
+ * @access  Private (需要 JWT)
+ */
+router.post('/:id/generate', authenticateJWT, generateTripItinerary);
 
 /**
  * @route   GET /api/trips/:id/budget

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { supabase } from '../config/supabase';
 import { getSupabaseClient } from '../config/supabase';
+import { generateItinerary } from '../services/ai.service';
 
 /**
  * 旅行计划控制器
@@ -271,6 +272,75 @@ export const deleteTrip = async (req: Request, res: Response) => {
     console.error('Delete trip error:', error);
     return res.status(500).json({
       error: 'Internal server error',
+    });
+  }
+};
+
+/**
+ * POST /api/trips/:id/generate - 生成 AI 行程
+ */
+export const generateTripItinerary = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const { id: tripId } = req.params;
+
+    // 使用用户的 token 创建 Supabase 客户端
+    const authHeader = req.headers.authorization;
+    const userSupabase = getSupabaseClient(authHeader);
+
+    // 获取旅行信息
+    const { data: trip, error: fetchError } = await userSupabase
+      .from('trips')
+      .select('*')
+      .eq('id', tripId)
+      .single();
+
+    if (fetchError || !trip) {
+      return res.status(404).json({
+        error: 'Trip not found',
+      });
+    }
+
+    // 检查用户权限
+    if (trip.user_id !== user.id) {
+      return res.status(403).json({
+        error: 'Access denied',
+      });
+    }
+
+    // 调用 AI 服务生成行程
+    const itinerary = await generateItinerary({
+      title: trip.title,
+      destination: trip.destination,
+      startDate: trip.start_date,
+      endDate: trip.end_date,
+      travelerCount: trip.traveler_count,
+      budgetTotal: trip.budget_total,
+      currency: trip.currency,
+    });
+
+    // 更新旅行计划的 itinerary 字段
+    const { data: updatedTrip, error: updateError } = await userSupabase
+      .from('trips')
+      .update({ itinerary })
+      .eq('id', tripId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Update trip itinerary error:', updateError);
+      return res.status(400).json({
+        error: updateError.message,
+      });
+    }
+
+    return res.status(200).json({
+      trip: updatedTrip,
+    });
+  } catch (error: any) {
+    console.error('Generate itinerary error:', error);
+    return res.status(500).json({
+      error: error.message || 'Internal server error',
     });
   }
 };
