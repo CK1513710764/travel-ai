@@ -186,3 +186,125 @@ ${budgetTotal ? `- 预算：${budgetTotal} ${currency}` : ''}
     throw new Error(`AI 服务调用失败: ${error.message}`);
   }
 };
+
+/**
+ * 解析语音文本，提取旅行信息
+ */
+export interface ParsedTripInfo {
+  title?: string;
+  destination?: string;
+  startDate?: string;
+  endDate?: string;
+  travelerCount?: number;
+  budgetTotal?: number;
+  preferences?: string;
+}
+
+export const parseVoiceInput = async (voiceText: string): Promise<ParsedTripInfo> => {
+  const client = getAIClient();
+
+  if (!client) {
+    throw new Error('AI service not configured. Please set DASHSCOPE_API_KEY or ALIYUN_API_KEY environment variable.');
+  }
+
+  const prompt = `你是一个旅行规划助手。请从用户的语音描述中提取旅行信息。
+
+用户描述：${voiceText}
+
+请提取以下信息（如果用户没有提到某项，该字段留空）：
+1. destination（目的地）- 城市或地区名称
+2. days（天数）- 旅行持续天数
+3. travelerCount（人数）- 旅行人数
+4. budgetTotal（预算）- 总预算金额（转换为数字，单位：元）
+5. preferences（偏好）- 用户提到的旅行偏好、兴趣等
+
+请以 JSON 格式返回，格式如下：
+{
+  "destination": "城市名",
+  "days": 5,
+  "travelerCount": 2,
+  "budgetTotal": 10000,
+  "preferences": "美食、文化"
+}
+
+注意：
+- 如果提到"万"，转换为对应的数字（如 1万 = 10000）
+- 如果提到"千"，转换为对应的数字（如 5千 = 5000）
+- 中文数字要转换为阿拉伯数字（如"五天" = 5，"两个人" = 2）
+- 只返回 JSON，不要有其他文字说明`;
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: 'qwen-plus',
+      messages: [
+        {
+          role: 'system',
+          content: '你是一个专业的旅行信息提取助手。你的任务是从用户的自然语言描述中准确提取旅行相关信息，并以 JSON 格式返回。',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.3, // 降低温度以提高准确性
+      max_tokens: 500,
+    });
+
+    const responseText = completion.choices[0]?.message?.content;
+
+    if (!responseText) {
+      throw new Error('AI 服务未返回内容');
+    }
+
+    // 提取 JSON
+    let jsonText = responseText.trim();
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?$/g, '');
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/```\n?/g, '').replace(/```\n?$/g, '');
+    }
+
+    const parsed = JSON.parse(jsonText);
+
+    // 构建返回结果
+    const result: ParsedTripInfo = {};
+
+    if (parsed.destination) {
+      result.destination = parsed.destination;
+      // 生成标题
+      const days = parsed.days ? `${parsed.days}天` : '';
+      result.title = `${parsed.destination}${days}之旅`;
+    }
+
+    if (parsed.days) {
+      // 计算日期
+      const today = new Date();
+      result.startDate = today.toISOString().split('T')[0];
+      const endDate = new Date(today);
+      endDate.setDate(endDate.getDate() + parseInt(parsed.days) - 1);
+      result.endDate = endDate.toISOString().split('T')[0];
+    }
+
+    if (parsed.travelerCount) {
+      result.travelerCount = parseInt(parsed.travelerCount);
+    }
+
+    if (parsed.budgetTotal) {
+      result.budgetTotal = parseFloat(parsed.budgetTotal);
+    }
+
+    if (parsed.preferences) {
+      result.preferences = parsed.preferences;
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error('AI 语音解析错误:', error);
+
+    if (error instanceof SyntaxError) {
+      throw new Error('AI 返回的数据格式无效');
+    }
+
+    throw new Error(`AI 解析失败: ${error.message}`);
+  }
+};

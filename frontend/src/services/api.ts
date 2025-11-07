@@ -86,6 +86,22 @@ export const authAPI = {
  * 旅行计划 API
  */
 export const tripsAPI = {
+  // 解析语音文本（使用 AI）
+  parseVoiceText: async (text: string): Promise<{
+    data: {
+      title?: string;
+      destination?: string;
+      startDate?: string;
+      endDate?: string;
+      travelerCount?: number;
+      budgetTotal?: number;
+      preferences?: string;
+    };
+  }> => {
+    const { data } = await axios.post(`${API_URL}/api/trips/parse-voice`, { text });
+    return data;
+  },
+
   // 获取旅行列表
   getTrips: async (): Promise<{ trips: Trip[] }> => {
     const { data } = await apiClient.get('/api/trips');

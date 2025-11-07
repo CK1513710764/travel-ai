@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { supabase } from '../config/supabase';
 import { getSupabaseClient } from '../config/supabase';
-import { generateItinerary } from '../services/ai.service';
+import { generateItinerary, parseVoiceInput } from '../services/ai.service';
 
 /**
  * 旅行计划控制器
@@ -377,3 +377,30 @@ export const generateTripItinerary = async (req: Request, res: Response) => {
   }
 };
 
+
+/**
+ * POST /api/parse-voice - 使用 AI 解析语音文本
+ */
+export const parseVoiceText = async (req: Request, res: Response) => {
+  try {
+    const { text } = req.body;
+
+    if (!text) {
+      return res.status(400).json({
+        error: '缺少语音文本',
+      });
+    }
+
+    // 调用 AI 服务解析语音文本
+    const parsedInfo = await parseVoiceInput(text);
+
+    return res.status(200).json({
+      data: parsedInfo,
+    });
+  } catch (error: any) {
+    console.error('Parse voice text error:', error);
+    return res.status(500).json({
+      error: error.message || 'Internal server error',
+    });
+  }
+};

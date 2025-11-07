@@ -6,12 +6,20 @@ import {
   updateTrip,
   deleteTrip,
   generateTripItinerary,
+  parseVoiceText,
 } from '../controllers/trips.controller';
 import { authenticateJWT } from '../middleware/auth';
 import { validateCreateTrip, validateUpdateTrip } from '../middleware/validation';
 import expensesRouter, { getBudgetSummary } from './expenses';
 
 const router = Router();
+
+/**
+ * @route   POST /api/trips/parse-voice
+ * @desc    使用 AI 解析语音文本
+ * @access  Public (不需要 JWT - 在创建旅行前调用)
+ */
+router.post('/parse-voice', parseVoiceText);
 
 /**
  * @route   POST /api/trips

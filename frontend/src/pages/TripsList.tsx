@@ -127,122 +127,35 @@ const CreateTripModal: React.FC<{
   const [error, setError] = useState('');
   const [voiceInput, setVoiceInput] = useState('');
   const [showVoiceHelp, setShowVoiceHelp] = useState(true);
+  const [aiParsing, setAiParsing] = useState(false);
 
-  // 解析语音输入的文本，提取旅行信息
-  const parseVoiceInput = (text: string) => {
-    const updates: any = {};
-
-    // 转换中文数字为阿拉伯数字
-    const chineseToNumber = (str: string) => {
-      const map: any = { '一': 1, '二': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10 };
-      return map[str] || str;
-    };
-
-    // 提取目的地 - 更灵活的匹配
-    const destinationPatterns = [
-      /(?:去|到|想去|前往|打算去)([^\d，,。预算天人元\s]{2,10})/,
-      /^([^\d，,。预算天人元\s]{2,10})/  // 如果开头就是地名
-    ];
-
-    for (const pattern of destinationPatterns) {
-      const match = text.match(pattern);
-      if (match) {
-        const dest = match[1].trim();
-        if (dest.length >= 2 && dest.length <= 10) {
-          updates.destination = dest;
-          break;
-        }
-      }
-    }
-
-    // 提取天数 - 支持阿拉伯数字和中文数字
-    const daysPatterns = [
-      /(\d+|[一二三四五六七八九十]+)\s*天/,
-      /([一二三四五六七八九十]+)日/
-    ];
-
-    for (const pattern of daysPatterns) {
-      const match = text.match(pattern);
-      if (match) {
-        const dayStr = chineseToNumber(match[1]);
-        const days = typeof dayStr === 'number' ? dayStr : parseInt(dayStr);
-        if (days > 0 && days < 100) {
-          const today = new Date();
-          updates.startDate = today.toISOString().split('T')[0];
-          const endDate = new Date(today);
-          endDate.setDate(endDate.getDate() + days - 1);
-          updates.endDate = endDate.toISOString().split('T')[0];
-          break;
-        }
-      }
-    }
-
-    // 提取预算 - 更灵活
-    const budgetPatterns = [
-      /预算\s*[：:是]?\s*(\d+(?:\.\d+)?)\s*[万千]?\s*(?:元|块)?/,
-      /(\d+(?:\.\d+)?)\s*[万千]\s*(?:元|块)?/,
-      /(\d+(?:\.\d+)?)\s*(?:元|块)/
-    ];
-
-    for (const pattern of budgetPatterns) {
-      const match = text.match(pattern);
-      if (match) {
-        let budget = parseFloat(match[1]);
-        if (text.includes('万')) {
-          budget = budget * 10000;
-        } else if (text.includes('千')) {
-          budget = budget * 1000;
-        }
-        updates.budgetTotal = budget.toString();
-        break;
-      }
-    }
-
-    // 提取人数 - 支持中文和阿拉伯数字
-    const travelerPatterns = [
-      /([一二两三四五六七八九十]|(\d+))\s*(?:个)?人/,
-      /([一二两三四五六七八九十]|(\d+))\s*(?:个人|位)/,
-    ];
-
-    for (const pattern of travelerPatterns) {
-      const match = text.match(pattern);
-      if (match) {
-        const countStr = chineseToNumber(match[1]);
-        const count = typeof countStr === 'number' ? countStr : parseInt(countStr);
-        if (count > 0 && count < 100) {
-          updates.travelerCount = count;
-          break;
-        }
-      }
-    }
-
-    // 如果没有提取到人数，检查特殊情况
-    if (!updates.travelerCount) {
-      if (text.includes('带孩子') || text.includes('带小孩')) {
-        updates.travelerCount = 2;
-      } else if (text.includes('一家人') || text.includes('全家')) {
-        updates.travelerCount = 4;
-      }
-    }
-
-    // 生成标题
-    if (updates.destination) {
-      const daysMatch = text.match(/(\d+|[一二三四五六七八九十]+)\s*天/);
-      const days = daysMatch ? (typeof chineseToNumber(daysMatch[1]) === 'number' ? chineseToNumber(daysMatch[1]) : daysMatch[1]) : '';
-      updates.title = `${updates.destination}${days ? days + '天' : ''}之旅`;
-    }
-
-    return updates;
-  };
-
-  // 处理语音输入
-  const handleVoiceTranscript = (transcript: string) => {
+  // 处理语音输入 - 使用 AI 解析
+  const handleVoiceTranscript = async (transcript: string) => {
     // 每次识别替换，不累加
     setVoiceInput(transcript);
+    setAiParsing(true);
+    setError('');
 
-    // 解析并更新表单
-    const parsedData = parseVoiceInput(transcript);
-    setFormData((prev) => ({ ...prev, ...parsedData }));
+    try {
+      // 调用 AI API 解析语音文本
+      const { data } = await tripsAPI.parseVoiceText(transcript);
+
+      // 更新表单数据
+      const updates: any = {};
+      if (data.title) updates.title = data.title;
+      if (data.destination) updates.destination = data.destination;
+      if (data.startDate) updates.startDate = data.startDate;
+      if (data.endDate) updates.endDate = data.endDate;
+      if (data.travelerCount) updates.travelerCount = data.travelerCount;
+      if (data.budgetTotal) updates.budgetTotal = data.budgetTotal.toString();
+
+      setFormData((prev) => ({ ...prev, ...updates }));
+    } catch (err: any) {
+      console.error('AI 解析错误:', err);
+      setError('AI 解析失败，请重试或手动填写');
+    } finally {
+      setAiParsing(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -301,7 +214,13 @@ const CreateTripModal: React.FC<{
 
           <div className="voice-input-wrapper">
             <VoiceInput onTranscript={handleVoiceTranscript} />
-            {voiceInput && (
+            {aiParsing && (
+              <div className="ai-parsing-status">
+                <span className="loading-spinner"></span>
+                <p>AI 正在解析您的旅行计划...</p>
+              </div>
+            )}
+            {voiceInput && !aiParsing && (
               <div className="voice-transcript">
                 <p className="voice-transcript-label">已识别:</p>
                 <p className="voice-transcript-text">{voiceInput}</p>
