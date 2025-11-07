@@ -114,7 +114,8 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}) 
         }
 
         if (finalTranscript) {
-          setTranscript((prev) => prev + finalTranscript);
+          // 只设置最新的结果，不累加
+          setTranscript(finalTranscript);
           if (onTranscript) {
             onTranscript(finalTranscript);
           }

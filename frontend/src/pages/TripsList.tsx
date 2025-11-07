@@ -130,64 +130,106 @@ const CreateTripModal: React.FC<{
 
   // 解析语音输入的文本，提取旅行信息
   const parseVoiceInput = (text: string) => {
-    const lowerText = text.toLowerCase();
     const updates: any = {};
 
-    // 提取目的地
-    const destinationMatch = text.match(/(?:去|到|想去|前往)(.+?)(?:[，,。\s]|$)/);
-    if (destinationMatch) {
-      const destination = destinationMatch[1].replace(/[\s，,。]/g, '');
-      if (destination && destination.length < 20) {
-        updates.destination = destination;
+    // 转换中文数字为阿拉伯数字
+    const chineseToNumber = (str: string) => {
+      const map: any = { '一': 1, '二': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10 };
+      return map[str] || str;
+    };
+
+    // 提取目的地 - 更灵活的匹配
+    const destinationPatterns = [
+      /(?:去|到|想去|前往|打算去)([^\d，,。预算天人元\s]{2,10})/,
+      /^([^\d，,。预算天人元\s]{2,10})/  // 如果开头就是地名
+    ];
+
+    for (const pattern of destinationPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        const dest = match[1].trim();
+        if (dest.length >= 2 && dest.length <= 10) {
+          updates.destination = dest;
+          break;
+        }
       }
     }
 
-    // 提取天数
-    const daysMatch = text.match(/(\d+)\s*天/);
-    if (daysMatch) {
-      const days = parseInt(daysMatch[1]);
-      if (days > 0 && days < 100) {
-        // 如果有天数，可以设置开始日期为今天，结束日期为 N 天后
-        const today = new Date();
-        updates.startDate = today.toISOString().split('T')[0];
-        const endDate = new Date(today);
-        endDate.setDate(endDate.getDate() + days - 1);
-        updates.endDate = endDate.toISOString().split('T')[0];
+    // 提取天数 - 支持阿拉伯数字和中文数字
+    const daysPatterns = [
+      /(\d+|[一二三四五六七八九十]+)\s*天/,
+      /([一二三四五六七八九十]+)日/
+    ];
+
+    for (const pattern of daysPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        const dayStr = chineseToNumber(match[1]);
+        const days = typeof dayStr === 'number' ? dayStr : parseInt(dayStr);
+        if (days > 0 && days < 100) {
+          const today = new Date();
+          updates.startDate = today.toISOString().split('T')[0];
+          const endDate = new Date(today);
+          endDate.setDate(endDate.getDate() + days - 1);
+          updates.endDate = endDate.toISOString().split('T')[0];
+          break;
+        }
       }
     }
 
-    // 提取预算
-    const budgetMatch = text.match(/预算\s*[：:是]?\s*(\d+(?:\.\d+)?)\s*[万千]?(?:元)?/) ||
-                        text.match(/(\d+(?:\.\d+)?)\s*[万千]?元/);
-    if (budgetMatch) {
-      let budget = parseFloat(budgetMatch[1]);
-      if (text.includes('万')) {
-        budget = budget * 10000;
-      } else if (text.includes('千')) {
-        budget = budget * 1000;
-      }
-      updates.budgetTotal = budget.toString();
-    }
+    // 提取预算 - 更灵活
+    const budgetPatterns = [
+      /预算\s*[：:是]?\s*(\d+(?:\.\d+)?)\s*[万千]?\s*(?:元|块)?/,
+      /(\d+(?:\.\d+)?)\s*[万千]\s*(?:元|块)?/,
+      /(\d+(?:\.\d+)?)\s*(?:元|块)/
+    ];
 
-    // 提取人数
-    const travelerMatch = text.match(/(\d+)\s*(?:人|个人|位)/) ||
-                          text.match(/(?:带|和).*?(\d+)\s*(?:人|个人|位|孩子|小孩|大人)/);
-    if (travelerMatch) {
-      const count = parseInt(travelerMatch[1]);
-      if (count > 0 && count < 100) {
-        updates.travelerCount = count;
+    for (const pattern of budgetPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        let budget = parseFloat(match[1]);
+        if (text.includes('万')) {
+          budget = budget * 10000;
+        } else if (text.includes('千')) {
+          budget = budget * 1000;
+        }
+        updates.budgetTotal = budget.toString();
+        break;
       }
     }
 
-    // 如果没有提取到旅行人数，检查是否提到"带孩子"等
-    if (!updates.travelerCount && (text.includes('带孩子') || text.includes('带小孩') || text.includes('家人'))) {
-      updates.travelerCount = 2; // 默认设置为2人
+    // 提取人数 - 支持中文和阿拉伯数字
+    const travelerPatterns = [
+      /([一二两三四五六七八九十]|(\d+))\s*(?:个)?人/,
+      /([一二两三四五六七八九十]|(\d+))\s*(?:个人|位)/,
+    ];
+
+    for (const pattern of travelerPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        const countStr = chineseToNumber(match[1]);
+        const count = typeof countStr === 'number' ? countStr : parseInt(countStr);
+        if (count > 0 && count < 100) {
+          updates.travelerCount = count;
+          break;
+        }
+      }
+    }
+
+    // 如果没有提取到人数，检查特殊情况
+    if (!updates.travelerCount) {
+      if (text.includes('带孩子') || text.includes('带小孩')) {
+        updates.travelerCount = 2;
+      } else if (text.includes('一家人') || text.includes('全家')) {
+        updates.travelerCount = 4;
+      }
     }
 
     // 生成标题
     if (updates.destination) {
-      const days = daysMatch ? daysMatch[1] + '天' : '';
-      updates.title = `${updates.destination}${days}之旅`;
+      const daysMatch = text.match(/(\d+|[一二三四五六七八九十]+)\s*天/);
+      const days = daysMatch ? (typeof chineseToNumber(daysMatch[1]) === 'number' ? chineseToNumber(daysMatch[1]) : daysMatch[1]) : '';
+      updates.title = `${updates.destination}${days ? days + '天' : ''}之旅`;
     }
 
     return updates;
@@ -195,11 +237,11 @@ const CreateTripModal: React.FC<{
 
   // 处理语音输入
   const handleVoiceTranscript = (transcript: string) => {
-    setVoiceInput((prev) => prev + transcript);
-    const fullText = voiceInput + transcript;
+    // 每次识别替换，不累加
+    setVoiceInput(transcript);
 
     // 解析并更新表单
-    const parsedData = parseVoiceInput(fullText);
+    const parsedData = parseVoiceInput(transcript);
     setFormData((prev) => ({ ...prev, ...parsedData }));
   };
 
