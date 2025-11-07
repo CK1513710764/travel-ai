@@ -20,6 +20,7 @@ const MapView: React.FC<MapViewProps> = ({ itinerary, destination }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
+  const polylinesRef = useRef<L.Polyline[]>([]);
 
   // 初始化地图
   useEffect(() => {
@@ -60,16 +61,24 @@ const MapView: React.FC<MapViewProps> = ({ itinerary, destination }) => {
       return;
     }
 
-    // 清除旧标记
+    // 清除旧标记和路线
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
+    polylinesRef.current.forEach((polyline) => polyline.remove());
+    polylinesRef.current = [];
 
     const bounds: L.LatLngTuple[] = [];
 
-    console.log('开始添加地点标记...');
+    console.log('开始添加地点标记和路线...');
+
+    // 定义每天的颜色
+    const dayColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
     // 遍历所有天的活动
     itinerary.days?.forEach((day) => {
+      const color = dayColors[(day.day - 1) % dayColors.length];
+      const dayRoute: L.LatLngTuple[] = []; // 当天的路线坐标
+
       day.activities?.forEach((activity) => {
         // 检查活动是否有坐标信息
         if (activity.coordinates) {
@@ -78,10 +87,7 @@ const MapView: React.FC<MapViewProps> = ({ itinerary, destination }) => {
 
           console.log(`添加标记: ${activity.activity} at [${lat}, ${lng}]`);
 
-          // 创建自定义图标（根据天数区分颜色）
-          const dayColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-          const color = dayColors[(day.day - 1) % dayColors.length];
-
+          // 创建自定义图标
           const customIcon = L.divIcon({
             className: 'custom-marker',
             html: `
@@ -129,10 +135,32 @@ const MapView: React.FC<MapViewProps> = ({ itinerary, destination }) => {
 
           markersRef.current.push(marker);
           bounds.push(position);
+
+          // 添加到当天路线
+          dayRoute.push(position);
         } else {
           console.warn(`活动 "${activity.activity}" 没有坐标信息`);
         }
       });
+
+      // 绘制当天的路线（如果有至少2个地点）
+      if (dayRoute.length >= 2) {
+        const polyline = L.polyline(dayRoute, {
+          color: color,
+          weight: 3,
+          opacity: 0.7,
+          smoothFactor: 1,
+        }).addTo(map);
+
+        // 添加路线提示
+        polyline.bindTooltip(`Day ${day.day} 路线`, {
+          permanent: false,
+          direction: 'center',
+        });
+
+        polylinesRef.current.push(polyline);
+        console.log(`Day ${day.day} 路线已绘制，包含 ${dayRoute.length} 个地点`);
+      }
     });
 
     console.log(`已添加 ${markersRef.current.length} 个标记`);
