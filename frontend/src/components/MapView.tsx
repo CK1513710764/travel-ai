@@ -63,6 +63,12 @@ const MapView: React.FC<MapViewProps> = ({ itinerary, destination }) => {
           zoom: 12,
           center: [116.397428, 39.90923], // 默认北京
           viewMode: '2D',
+          layers: [
+            // 使用卫星图层，支持全球地图
+            new AMapInstance.TileLayer.Satellite(),
+            // 添加路网图层
+            new AMapInstance.TileLayer.RoadNet(),
+          ],
         });
 
         console.log('地图实例创建成功');
