@@ -101,6 +101,7 @@ ${budgetTotal ? `- 预算：${budgetTotal} ${currency}` : ''}
 3. 住宿建议
 4. 预估费用
 5. 旅行小贴士
+6. **重要**：每个活动必须包含准确的 GPS 坐标（经度 longitude 和纬度 latitude）
 
 请以 JSON 格式返回，格式如下：
 {
@@ -116,7 +117,11 @@ ${budgetTotal ? `- 预算：${budgetTotal} ${currency}` : ''}
           "activity": "活动名称",
           "location": "具体地点",
           "description": "活动描述",
-          "estimatedCost": 100
+          "estimatedCost": 100,
+          "coordinates": {
+            "lng": 135.5,
+            "lat": 34.6
+          }
         }
       ],
       "meals": {
@@ -131,6 +136,13 @@ ${budgetTotal ? `- 预算：${budgetTotal} ${currency}` : ''}
   "tips": ["旅行小贴士1", "旅行小贴士2"],
   "estimatedTotalCost": 5000
 }
+
+**重要提醒**：
+- 每个活动的 coordinates 字段必须包含该地点的真实 GPS 坐标
+- 经度（lng）范围：-180 到 180
+- 纬度（lat）范围：-90 到 90
+- 请使用该地点的实际坐标，例如东京塔的坐标是 {"lng": 139.7454, "lat": 35.6586}
+- 如果活动是交通（如"乘坐地铁"），可以使用起点或终点的坐标
 
 请确保返回的是有效的 JSON 格式，不要包含任何额外的文本说明。`;
 
