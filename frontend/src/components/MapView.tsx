@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-polylinedecorator';
 import type { Itinerary } from '../types';
 
 interface MapViewProps {
@@ -21,6 +22,7 @@ const MapView: React.FC<MapViewProps> = ({ itinerary, destination }) => {
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
   const polylinesRef = useRef<L.Polyline[]>([]);
+  const decoratorsRef = useRef<any[]>([]);
 
   // 初始化地图
   useEffect(() => {
@@ -61,11 +63,13 @@ const MapView: React.FC<MapViewProps> = ({ itinerary, destination }) => {
       return;
     }
 
-    // 清除旧标记和路线
+    // 清除旧标记、路线和装饰器
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
     polylinesRef.current.forEach((polyline) => polyline.remove());
     polylinesRef.current = [];
+    decoratorsRef.current.forEach((decorator) => decorator.remove());
+    decoratorsRef.current = [];
 
     const bounds: L.LatLngTuple[] = [];
 
@@ -158,8 +162,29 @@ const MapView: React.FC<MapViewProps> = ({ itinerary, destination }) => {
           direction: 'center',
         });
 
+        // 添加方向箭头
+        const decorator = (L as any).polylineDecorator(polyline, {
+          patterns: [
+            {
+              offset: '10%',
+              repeat: 100,
+              symbol: (L as any).Symbol.arrowHead({
+                pixelSize: 12,
+                polygon: false,
+                pathOptions: {
+                  stroke: true,
+                  color: color,
+                  weight: 2,
+                  opacity: 0.8,
+                },
+              }),
+            },
+          ],
+        }).addTo(map);
+
         polylinesRef.current.push(polyline);
-        console.log(`Day ${day.day} 路线已绘制，包含 ${dayRoute.length} 个地点`);
+        decoratorsRef.current.push(decorator);
+        console.log(`Day ${day.day} 路线已绘制，包含 ${dayRoute.length} 个地点，已添加方向箭头`);
       }
     });
 
