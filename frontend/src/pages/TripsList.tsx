@@ -122,6 +122,7 @@ const CreateTripModal: React.FC<{
     endDate: '',
     travelerCount: 1,
     budgetTotal: '',
+    preferences: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -148,6 +149,7 @@ const CreateTripModal: React.FC<{
       if (data.endDate) updates.endDate = data.endDate;
       if (data.travelerCount) updates.travelerCount = data.travelerCount;
       if (data.budgetTotal) updates.budgetTotal = data.budgetTotal.toString();
+      if (data.preferences) updates.preferences = data.preferences;
 
       setFormData((prev) => ({ ...prev, ...updates }));
     } catch (err: any) {
@@ -172,6 +174,7 @@ const CreateTripModal: React.FC<{
         travelerCount: formData.travelerCount,
         budgetTotal: formData.budgetTotal ? parseFloat(formData.budgetTotal) : undefined,
         currency: 'CNY',
+        preferences: formData.preferences || undefined,
       });
       onCreated(trip);
     } catch (err: any) {
@@ -305,6 +308,19 @@ const CreateTripModal: React.FC<{
                 placeholder="例如：5000"
               />
             </div>
+          </div>
+
+          <div className="form-group">
+            <label>旅行偏好（可选）</label>
+            <input
+              type="text"
+              value={formData.preferences}
+              onChange={(e) => setFormData({ ...formData, preferences: e.target.value })}
+              placeholder="例如：喜欢美食和动漫、带孩子、喜欢历史文化"
+            />
+            <small style={{ color: '#6b7280', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+              提示：说出您的兴趣和特殊需求，AI 会为您定制个性化行程
+            </small>
           </div>
 
           <div className="modal-actions">

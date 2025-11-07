@@ -60,7 +60,7 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onTranscript, placeholder = '�
         type="button"
         onClick={handleClick}
         className={`voice-input-button ${isListening ? 'listening' : ''}`}
-        title={isListening ? '点击停止录音' : placeholder}
+        title={isListening ? '点击停止或等待自动识别完成' : placeholder}
       >
         {isListening ? (
           <span className="voice-input-icon recording">🎤</span>
@@ -72,7 +72,12 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onTranscript, placeholder = '�
       {isListening && (
         <div className="voice-input-status">
           <div className="voice-input-pulse"></div>
-          <span className="voice-input-text">正在聆听...</span>
+          <span className="voice-input-text">
+            {interimTranscript ? '正在识别...' : '请说话...'}
+          </span>
+          <small style={{ display: 'block', marginTop: '4px', fontSize: '11px', color: '#9ca3af' }}>
+            讲完后会自动停止，或点击麦克风手动停止
+          </small>
         </div>
       )}
 

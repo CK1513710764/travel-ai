@@ -208,3 +208,109 @@
   padding: 40px;
   color: #dc2626;
 }
+
+/* 编辑按钮 */
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.edit-btn {
+  margin-left: auto;
+  font-size: 14px;
+  padding: 8px 16px;
+}
+
+/* 编辑表单 */
+.edit-form {
+  background: white;
+  padding: 30px;
+  margin: 0 20px 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* 偏好信息高亮 */
+.preferences-item {
+  grid-column: 1 / -1;
+  background: #f0f9ff;
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 4px solid #667eea;
+}
+
+.preferences-item .label {
+  color: #667eea;
+}
+
+.preferences-item .value {
+  color: #1e40af;
+  font-weight: 500;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-btn {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}

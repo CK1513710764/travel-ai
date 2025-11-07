@@ -22,6 +22,7 @@ export const createTrip = async (req: Request, res: Response) => {
       travelerCount,
       budgetTotal,
       currency,
+      preferences,
     } = req.body;
 
     // 使用用户的 token 创建 Supabase 客户端
@@ -40,6 +41,7 @@ export const createTrip = async (req: Request, res: Response) => {
         traveler_count: travelerCount,
         budget_total: budgetTotal,
         currency: currency || 'CNY',
+        preferences: preferences || null,
         status: 'planning',
       })
       .select()
@@ -191,6 +193,7 @@ export const updateTrip = async (req: Request, res: Response) => {
     if (updateData.travelerCount !== undefined) updateFields.traveler_count = updateData.travelerCount;
     if (updateData.budgetTotal !== undefined) updateFields.budget_total = updateData.budgetTotal;
     if (updateData.currency !== undefined) updateFields.currency = updateData.currency;
+    if (updateData.preferences !== undefined) updateFields.preferences = updateData.preferences;
     if (updateData.status !== undefined) updateFields.status = updateData.status;
     if (updateData.itinerary !== undefined) updateFields.itinerary = updateData.itinerary;
 
@@ -317,6 +320,7 @@ export const generateTripItinerary = async (req: Request, res: Response) => {
       travelerCount: trip.traveler_count,
       budgetTotal: trip.budget_total,
       currency: trip.currency,
+      preferences: trip.preferences,
     });
 
     // 更新旅行计划的 itinerary 字段

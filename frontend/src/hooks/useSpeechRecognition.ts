@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
  * Web Speech API 的 TypeScript 类型定义
@@ -69,6 +69,9 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}) 
   const [error, setError] = useState<string>('');
   const [isSupported, setIsSupported] = useState(false);
 
+  // 保存 recognition 实例的引用
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
   // 检查浏览器支持
   useEffect(() => {
     const supported = 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
@@ -77,12 +80,32 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}) 
     if (!supported) {
       setError('您的浏览器不支持语音识别功能。请使用 Chrome、Edge 或 Safari 浏览器。');
     }
+
+    // 清理函数：组件卸载时停止识别
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          // 忽略停止时的错误
+        }
+      }
+    };
   }, []);
 
   const startListening = useCallback(() => {
     if (!isSupported) {
       setError('语音识别不可用');
       return;
+    }
+
+    // 如果已经在监听，先停止
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        // 忽略错误
+      }
     }
 
     try {
@@ -94,6 +117,7 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}) 
       recognition.lang = lang;
 
       recognition.onstart = () => {
+        console.log('语音识别已启动');
         setIsListening(true);
         setError('');
         setTranscript('');
@@ -102,18 +126,19 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}) 
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         let finalTranscript = '';
-        let interimTranscript = '';
+        let interimText = '';
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           if (result.isFinal) {
             finalTranscript += result[0].transcript;
           } else {
-            interimTranscript += result[0].transcript;
+            interimText += result[0].transcript;
           }
         }
 
         if (finalTranscript) {
+          console.log('识别到最终结果:', finalTranscript);
           // 只设置最新的结果，不累加
           setTranscript(finalTranscript);
           if (onTranscript) {
@@ -121,17 +146,20 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}) 
           }
         }
 
-        setInterimTranscript(interimTranscript);
+        setInterimTranscript(interimText);
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('语音识别错误:', event.error);
 
+        // no-speech 错误不显示给用户（这是正常的，表示用户停止说话）
+        if (event.error === 'no-speech') {
+          setIsListening(false);
+          return;
+        }
+
         let errorMessage = '语音识别错误';
         switch (event.error) {
-          case 'no-speech':
-            errorMessage = '未检测到语音，请重试';
-            break;
           case 'audio-capture':
             errorMessage = '无法访问麦克风，请检查权限';
             break;
@@ -141,6 +169,9 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}) 
           case 'network':
             errorMessage = '网络错误，请检查网络连接';
             break;
+          case 'aborted':
+            // 用户主动停止，不显示错误
+            return;
           default:
             errorMessage = `语音识别错误: ${event.error}`;
         }
@@ -150,9 +181,12 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}) 
       };
 
       recognition.onend = () => {
+        console.log('语音识别已结束');
         setIsListening(false);
+        recognitionRef.current = null;
       };
 
+      recognitionRef.current = recognition;
       recognition.start();
     } catch (err: any) {
       console.error('启动语音识别失败:', err);
@@ -162,8 +196,15 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}) 
   }, [isSupported, continuous, lang, onTranscript]);
 
   const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      try {
+        console.log('手动停止语音识别');
+        recognitionRef.current.stop();
+      } catch (e) {
+        console.error('停止识别时出错:', e);
+      }
+    }
     setIsListening(false);
-    // 语音识别会自动在 onend 中清理
   }, []);
 
   const resetTranscript = useCallback(() => {

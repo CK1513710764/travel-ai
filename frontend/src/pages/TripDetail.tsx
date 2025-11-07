@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { tripsAPI } from '../services/api';
 import type { Trip } from '../types';
 import MapView from '../components/MapView';
+import ExpenseManager from '../components/ExpenseManager';
 import '../components/MapView.css';
 import './TripDetail.css';
 
@@ -13,6 +14,16 @@ const TripDetail = () => {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    destination: '',
+    startDate: '',
+    endDate: '',
+    travelerCount: 1,
+    budgetTotal: '',
+    preferences: '',
+  });
 
   useEffect(() => {
     loadTrip();
@@ -23,6 +34,16 @@ const TripDetail = () => {
     try {
       const { trip } = await tripsAPI.getTripById(id);
       setTrip(trip);
+      // 初始化编辑表单
+      setEditForm({
+        title: trip.title,
+        destination: trip.destination,
+        startDate: trip.start_date,
+        endDate: trip.end_date,
+        travelerCount: trip.traveler_count,
+        budgetTotal: trip.budget_total?.toString() || '',
+        preferences: trip.preferences || '',
+      });
     } catch (err) {
       setError('加载失败');
     } finally {
@@ -44,6 +65,46 @@ const TripDetail = () => {
     }
   };
 
+  const handleStartEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    // 恢复原始数据
+    if (trip) {
+      setEditForm({
+        title: trip.title,
+        destination: trip.destination,
+        startDate: trip.start_date,
+        endDate: trip.end_date,
+        travelerCount: trip.traveler_count,
+        budgetTotal: trip.budget_total?.toString() || '',
+        preferences: trip.preferences || '',
+      });
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!id) return;
+    setError('');
+    try {
+      const { trip: updatedTrip } = await tripsAPI.updateTrip(id, {
+        title: editForm.title,
+        destination: editForm.destination,
+        start_date: editForm.startDate,
+        end_date: editForm.endDate,
+        traveler_count: editForm.travelerCount,
+        budget_total: editForm.budgetTotal ? parseFloat(editForm.budgetTotal) : undefined,
+        preferences: editForm.preferences || undefined,
+      });
+      setTrip(updatedTrip);
+      setIsEditing(false);
+    } catch (err: any) {
+      setError(err.response?.data?.error || '保存失败');
+    }
+  };
+
   if (loading) return <div className="loading">加载中...</div>;
   if (!trip) return <div className="error">旅行不存在</div>;
 
@@ -53,29 +114,127 @@ const TripDetail = () => {
     <div className="trip-detail-container">
       <header className="detail-header">
         <button onClick={() => navigate('/trips')} className="back-btn">← 返回</button>
-        <h1>{trip.title}</h1>
+        <h1>{isEditing ? '编辑旅行信息' : trip.title}</h1>
+        {!isEditing && (
+          <button onClick={handleStartEdit} className="btn-secondary edit-btn">
+            ✏️ 编辑
+          </button>
+        )}
       </header>
 
-      <div className="trip-info">
-        <div className="info-item">
-          <span className="label">目的地:</span>
-          <span className="value">{trip.destination}</span>
-        </div>
-        <div className="info-item">
-          <span className="label">日期:</span>
-          <span className="value">{trip.start_date} 至 {trip.end_date}</span>
-        </div>
-        <div className="info-item">
-          <span className="label">人数:</span>
-          <span className="value">{trip.traveler_count} 人</span>
-        </div>
-        {trip.budget_total && (
-          <div className="info-item">
-            <span className="label">预算:</span>
-            <span className="value">¥{trip.budget_total}</span>
+      {isEditing ? (
+        <div className="edit-form">
+          <div className="form-group">
+            <label>旅行标题</label>
+            <input
+              type="text"
+              value={editForm.title}
+              onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+              placeholder="例如：2025年夏季北京之旅"
+            />
           </div>
-        )}
-      </div>
+
+          <div className="form-group">
+            <label>目的地</label>
+            <input
+              type="text"
+              value={editForm.destination}
+              onChange={(e) => setEditForm({ ...editForm, destination: e.target.value })}
+              placeholder="例如：北京"
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>开始日期</label>
+              <input
+                type="date"
+                value={editForm.startDate}
+                onChange={(e) => setEditForm({ ...editForm, startDate: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>结束日期</label>
+              <input
+                type="date"
+                value={editForm.endDate}
+                onChange={(e) => setEditForm({ ...editForm, endDate: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>旅行人数</label>
+              <input
+                type="number"
+                min="1"
+                value={editForm.travelerCount}
+                onChange={(e) => setEditForm({ ...editForm, travelerCount: parseInt(e.target.value) })}
+              />
+            </div>
+            <div className="form-group">
+              <label>预算（可选）</label>
+              <input
+                type="number"
+                min="0"
+                value={editForm.budgetTotal}
+                onChange={(e) => setEditForm({ ...editForm, budgetTotal: e.target.value })}
+                placeholder="例如：5000"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>旅行偏好（可选）</label>
+            <input
+              type="text"
+              value={editForm.preferences}
+              onChange={(e) => setEditForm({ ...editForm, preferences: e.target.value })}
+              placeholder="例如：喜欢美食和动漫、带孩子、喜欢历史文化"
+            />
+            <small style={{ color: '#6b7280', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+              提示：说出您的兴趣和特殊需求，AI 会为您定制个性化行程
+            </small>
+          </div>
+
+          <div className="form-actions">
+            <button onClick={handleCancelEdit} className="btn-secondary">
+              取消
+            </button>
+            <button onClick={handleSaveEdit} className="btn-primary">
+              保存修改
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="trip-info">
+          <div className="info-item">
+            <span className="label">目的地:</span>
+            <span className="value">{trip.destination}</span>
+          </div>
+          <div className="info-item">
+            <span className="label">日期:</span>
+            <span className="value">{trip.start_date} 至 {trip.end_date}</span>
+          </div>
+          <div className="info-item">
+            <span className="label">人数:</span>
+            <span className="value">{trip.traveler_count} 人</span>
+          </div>
+          {trip.budget_total && (
+            <div className="info-item">
+              <span className="label">预算:</span>
+              <span className="value">¥{trip.budget_total}</span>
+            </div>
+          )}
+          {trip.preferences && (
+            <div className="info-item preferences-item">
+              <span className="label">旅行偏好:</span>
+              <span className="value">{trip.preferences}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {error && <div className="error-message">{error}</div>}
 
@@ -171,6 +330,9 @@ const TripDetail = () => {
           )}
         </div>
       )}
+
+      {/* 费用管理 */}
+      {id && <ExpenseManager tripId={id} />}
     </div>
   );
 };

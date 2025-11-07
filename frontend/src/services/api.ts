@@ -117,6 +117,7 @@ export const tripsAPI = {
     travelerCount: number;
     budgetTotal?: number;
     currency?: string;
+    preferences?: string;
   }): Promise<{ trip: Trip }> => {
     const { data } = await apiClient.post('/api/trips', tripData);
     return data;

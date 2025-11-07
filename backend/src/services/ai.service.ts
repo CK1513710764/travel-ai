@@ -31,6 +31,7 @@ interface TripData {
   travelerCount: number;
   budgetTotal?: number;
   currency?: string;
+  preferences?: string;
 }
 
 /**
@@ -77,7 +78,7 @@ export const generateItinerary = async (tripData: TripData): Promise<Itinerary> 
     throw new Error('AI service not configured. Please set DASHSCOPE_API_KEY or ALIYUN_API_KEY environment variable.');
   }
 
-  const { title, destination, startDate, endDate, travelerCount, budgetTotal, currency = 'CNY' } = tripData;
+  const { title, destination, startDate, endDate, travelerCount, budgetTotal, currency = 'CNY', preferences } = tripData;
 
   // 计算旅行天数
   const start = new Date(startDate);
@@ -94,7 +95,9 @@ export const generateItinerary = async (tripData: TripData): Promise<Itinerary> 
 - 旅行天数：${days} 天
 - 旅行人数：${travelerCount} 人
 ${budgetTotal ? `- 预算：${budgetTotal} ${currency}` : ''}
+${preferences ? `- 旅行偏好：${preferences}` : ''}
 
+${preferences ? `**重要提示**：用户的旅行偏好是"${preferences}"，请根据这些偏好精心安排活动和景点，确保行程符合用户的兴趣和需求。例如，如果用户喜欢美食，请安排更多特色餐厅和美食体验；如果带孩子，请安排适合儿童的活动和景点。\n` : ''}
 请生成一个详细的行程计划，包括：
 1. 每天的活动安排（景点、体验、交通）
 2. 餐饮推荐（早中晚餐）

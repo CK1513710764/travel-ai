@@ -6,7 +6,7 @@ import type { Itinerary } from '../types';
 
 interface MapViewProps {
   itinerary: Itinerary | null;
-  destination: string;
+  destination?: string;
 }
 
 // 修复 Leaflet 默认图标路径问题
@@ -17,7 +17,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
-const MapView: React.FC<MapViewProps> = ({ itinerary, destination }) => {
+const MapView: React.FC<MapViewProps> = ({ itinerary }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);

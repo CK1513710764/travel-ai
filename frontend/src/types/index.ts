@@ -29,6 +29,7 @@ export interface Trip {
   traveler_count: number;
   budget_total?: number;
   currency?: string;
+  preferences?: string;
   status?: string;
   itinerary?: Itinerary;
   created_at?: string;
